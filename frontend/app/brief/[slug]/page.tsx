@@ -92,13 +92,6 @@ export default function BriefDetail() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-950 px-6 py-4">
-        <Link href="/" className="text-xl font-medium tracking-tight text-white">
-          qu<span className="text-indigo-500">o</span>vo
-        </Link>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Approval Banner */}
