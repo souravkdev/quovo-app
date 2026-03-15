@@ -72,7 +72,10 @@ export default function Pricing() {
     }
 
     if (!isLoggedIn()) {
-      router.push("/");
+      // Redirect to GitHub login
+      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+      const redirectUri = `${process.env.NEXT_PUBLIC_API_URL}/auth/github/callback/`;
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`;
       return;
     }
 
