@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import api from "@/lib/api";
-import { logout } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -104,9 +103,14 @@ export function Sidebar() {
     (item) => !user || item.plans.includes(user.plan)
   );
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await api.post("/users/logout/");
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      router.push("/signin");
+    }
   };
 
   const getPlanBadgeColor = (plan: string) => {

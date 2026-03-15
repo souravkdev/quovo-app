@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isLoggedIn } from "@/lib/utils";
 import api from "@/lib/api";
 import Link from "next/link";
 
@@ -21,9 +20,6 @@ export default function NewBrief() {
   // Check auth on mount
   useEffect(() => {
     setIsClient(true);
-    if (!isLoggedIn()) {
-      router.push("/");
-    }
   }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

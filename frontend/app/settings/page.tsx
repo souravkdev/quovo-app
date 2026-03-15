@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { isLoggedIn } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -20,10 +19,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push("/");
-      return;
-    }
     fetchUser();
   }, []);
 
@@ -37,8 +32,6 @@ export default function SettingsPage() {
       setLoading(false);
     }
   };
-
-  if (!isLoggedIn()) return null;
 
   return (
     <div className="min-h-screen bg-slate-950">

@@ -21,13 +21,5 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function isLoggedIn(): boolean {
-  if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("access_token");
-}
-
-export function logout(): void {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  window.location.href = "/";
-}
+// Auth helpers are now cookie-based (HttpOnly JWTs).
+// Login state is determined server-side via /users/me/ rather than localStorage.

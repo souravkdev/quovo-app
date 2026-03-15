@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { isLoggedIn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 
 interface Brief {
@@ -24,10 +24,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     setIsClient(true);
-    if (!isLoggedIn()) {
-      router.push("/");
-      return;
-    }
     fetchBriefs();
   }, [router]);
 
