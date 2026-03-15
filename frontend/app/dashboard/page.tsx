@@ -56,25 +56,20 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-950 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <Link href="/" className="text-xl font-medium tracking-tight text-white">
-          qu<span className="text-indigo-500">o</span>vo
-        </Link>
-        <Link
-          href="/brief/new"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
-          + New Brief
-        </Link>
-      </div>
-
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-medium text-white mb-2">Your Briefs</h1>
-          <p className="text-gray-400">Manage and share your project briefs with clients.</p>
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        {/* Page Header */}
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Your Briefs</h1>
+            <p className="text-gray-400">Manage and share your project briefs with clients.</p>
+          </div>
+          <Link
+            href="/brief/new"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap"
+          >
+            + New Brief
+          </Link>
         </div>
 
         {/* Error State */}

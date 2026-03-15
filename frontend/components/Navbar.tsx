@@ -1,14 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { isLoggedIn, logout } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { isLoggedIn } from "@/lib/utils";
 
 export default function Navbar() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setLoggedIn(isLoggedIn());
   }, []);
+
+  // Hide navbar in dashboard and app areas (sidebar is there)
+  if (loggedIn && (pathname?.startsWith("/dashboard") || pathname?.startsWith("/brief") || pathname?.startsWith("/ai") || pathname?.startsWith("/pricing") || pathname?.startsWith("/settings"))) {
+    return null;
+  }
 
   return (
     <nav className="border-b border-slate-800 bg-slate-950 px-6 py-4 flex items-center justify-between">
@@ -18,26 +25,12 @@ export default function Navbar() {
 
       <div className="flex items-center gap-4">
         {loggedIn ? (
-          <>
-            <Link
-              href="/dashboard"
-              className="text-sm text-gray-300 hover:text-white"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/brief/new"
-              className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-            >
-              New brief
-            </Link>
-            <button
-              onClick={logout}
-              className="text-sm text-gray-400 hover:text-gray-200"
-            >
-              Sign out
-            </button>
-          </>
+          <Link
+            href="/dashboard"
+            className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+          >
+            Go to Dashboard
+          </Link>
         ) : (
           <>
             <Link href="/pricing" className="text-sm text-gray-300 hover:text-white">

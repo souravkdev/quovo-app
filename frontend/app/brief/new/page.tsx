@@ -83,17 +83,10 @@ export default function NewBrief() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-950 px-6 py-4">
-        <Link href="/" className="text-xl font-medium tracking-tight text-white">
-          qu<span className="text-indigo-500">o</span>vo
-        </Link>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-medium text-white mb-2">Create a New Brief</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Create a New Brief</h1>
           <p className="text-gray-400">
             Paste your client's message and we'll generate a professional project brief instantly.
           </p>
