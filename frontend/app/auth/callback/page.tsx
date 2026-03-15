@@ -1,28 +1,20 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function AuthCallback() {
   const router = useRouter();
-  const params = useSearchParams();
 
   useEffect(() => {
-    const access = params.get("access");
-    const refresh = params.get("refresh");
-
-    if (access && refresh) {
-      // Save tokens to localStorage
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-      router.push("/dashboard");
-    } else {
-      router.push("/?error=auth_failed");
-    }
-  }, []);
+    // Tokens are already stored in HttpOnly cookies by the backend.
+    // We just send the user to their dashboard.
+    router.replace("/dashboard");
+  }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-gray-500 text-sm">Signing you in...</p>
+    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+      <p className="text-sm text-slate-300">Signing you in securely…</p>
     </div>
   );
 }
+

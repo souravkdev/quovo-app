@@ -2,23 +2,8 @@
 
 import Link from "next/link";
 import { CheckCircle, ArrowRight, Zap, BarChart3, Lock, Users } from "lucide-react";
-import { useEffect, useState } from "react";
-import { isLoggedIn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [checkedAuth, setCheckedAuth] = useState(false);
-
-  useEffect(() => {
-    setCheckedAuth(true);
-    if (isLoggedIn()) {
-      router.push("/dashboard");
-    }
-  }, []);
-
-  if (!checkedAuth) return null;
-
   const features = [
     {
       icon: Zap,
@@ -109,7 +94,7 @@ export default function LandingPage() {
               FAQ
             </a>
             <Link
-              href="http://localhost:8000/auth/github/"
+              href="/signin"
               className="text-sm font-medium text-gray-900 hover:text-indigo-600"
             >
               Sign in
@@ -134,7 +119,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Link
-                href="http://localhost:8000/auth/github/"
+                href="/signup"
                 className="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
               >
                 Get started free
@@ -254,7 +239,7 @@ export default function LandingPage() {
                   </div>
 
                   <Link
-                    href="http://localhost:8000/auth/github/"
+                    href="/signup"
                     className={`block w-full text-center py-3 rounded-lg font-semibold mb-8 transition-colors ${
                       plan.highlighted
                         ? "bg-white text-indigo-600 hover:bg-indigo-50"
@@ -335,7 +320,7 @@ export default function LandingPage() {
             Join thousands of freelancers saving hours and protecting their projects
           </p>
           <Link
-            href="http://localhost:8000/auth/github/"
+            href="/signup"
             className="inline-flex items-center gap-2 bg-white text-indigo-600 px-8 py-4 rounded-lg font-semibold hover:bg-indigo-50 transition-colors text-lg"
           >
             Get started free

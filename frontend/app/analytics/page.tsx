@@ -1,20 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { isLoggedIn } from "@/lib/utils";
-
 export default function AnalyticsPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push("/");
-    }
-  }, []);
-
-  if (!isLoggedIn()) return null;
-
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="max-w-5xl mx-auto px-6 py-12">

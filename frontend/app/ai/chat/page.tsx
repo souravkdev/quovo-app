@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { isLoggedIn } from '@/lib/utils';
 import Link from 'next/link';
 
 interface Message {
@@ -20,9 +19,7 @@ export default function AIChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      router.push('/');
-    }
+    // Protected by backend; unauthenticated users will be redirected via 401 handling.
   }, [router]);
 
   const scrollToBottom = () => {

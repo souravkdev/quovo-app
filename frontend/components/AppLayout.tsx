@@ -1,16 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { isLoggedIn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import LandingPage from "@/components/LandingPage";
 
+const AUTH_PAGES = ["/signin", "/signup", "/forgot-password", "/reset-password"];
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setLoggedIn(isLoggedIn());
+    async function checkAuth() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/users/me/`,
+          {
+            credentials: "include",
+          }
+        );
+        setLoggedIn(res.ok);
+      } catch {
+        setLoggedIn(false);
+      }
+    }
+    checkAuth();
   }, []);
 
   // Show nothing while checking auth
@@ -25,12 +41,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Show landing page if not logged in
+  // Logged-out experience
   if (!loggedIn) {
+    // Marketing landing for home page
+    if (pathname === "/" || pathname === null) {
+      return <LandingPage />;
+    }
+
+    // Auth and other public pages render their own layouts
+    if (AUTH_PAGES.includes(pathname)) {
+      return <>{children}</>;
+    }
+
+    // Fallback: show landing for other unknown public routes
     return <LandingPage />;
   }
 
-  // Show app layout if logged in
+  // Logged-in app layout
   return (
     <>
       <Navbar />
