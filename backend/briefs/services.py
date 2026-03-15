@@ -1,12 +1,14 @@
 import json
 import os
-from openai import OpenAI
+import re
+import requests
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3-coder:30b")
 
 def generate_brief(client_message: str, freelancer_type: str, hourly_rate: int, extra_context: str = ""):
     """
-    Generate a structured project brief using OpenAI GPT-4o with JSON mode.
+    Generate a structured project brief using local Ollama (Qwen model).
     
     Args:
         client_message: The raw client message/request
@@ -52,56 +54,44 @@ Make sure:
 - Out of scope items prevent scope creep
 - Next steps are clear action items for the client
 
-Return ONLY valid JSON, no additional text."""
+Return ONLY valid JSON, no additional text or markdown code blocks."""
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.7,
-            max_tokens=2000,
+        response = requests.post(
+            f"{OLLAMA_API_URL}/api/generate",
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": f"System: {system_prompt}\n\nUser: {user_message}",
+                "stream": False,
+                "temperature": 0.7,
+            },
+            timeout=300
         )
-    except Exception as e:
-        # Fallback to gpt-4-turbo if gpt-4o fails
+        response.raise_for_status()
+        
+        response_data = response.json()
+        response_text = response_data.get("response", "")
+        
         try:
-            response = client.chat.completions.create(
-                model="gpt-4-turbo",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.7,
-                max_tokens=2000,
-            )
-        except Exception:
-            # If JSON mode fails, try without it
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.7,
-                max_tokens=2000,
-            )
+            brief_data = json.loads(response_text)
+        except json.JSONDecodeError:
+            # If JSON parsing fails, try to extract JSON from markdown code blocks
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+            if json_match:
+                brief_data = json.loads(json_match.group(1))
+            else:
+                # Try to extract raw JSON object
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    brief_data = json.loads(json_match.group())
+                else:
+                    raise ValueError(f"Failed to parse Ollama response as JSON: {response_text}")
+        
+        return brief_data
     
-    # Extract and parse the JSON response
-    response_text = response.choices[0].message.content
-    
-    try:
-        brief_data = json.loads(response_text)
-    except json.JSONDecodeError:
-        # If JSON parsing fails, try to extract JSON from the response
-        import re
-        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        if json_match:
-            brief_data = json.loads(json_match.group())
-        else:
-            raise ValueError("Failed to parse OpenAI response as JSON")
-    
-    return brief_data
+    except requests.exceptions.ConnectTimeout:
+        raise Exception(f"Failed to connect to Ollama at {OLLAMA_API_URL}. Make sure Ollama is running.")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Ollama API error: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Brief generation error: {str(e)}")

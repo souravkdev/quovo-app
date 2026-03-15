@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "users",
     "briefs",
     "payments",
+    "ai_assistant",
 ]
 
 MIDDLEWARE = [
