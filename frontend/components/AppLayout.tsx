@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import LandingPage from "@/components/LandingPage";
 
-const AUTH_PAGES = ["/signin", "/signup", "/forgot-password", "/reset-password"];
+const AUTH_PAGES = ["/signin", "/signup", "/forgot-password", "/reset-password", "/auth/callback"];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,7 +16,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     async function checkAuth() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/users/me/`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/auth/me/`,
           {
             credentials: "include",
           }

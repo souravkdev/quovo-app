@@ -14,7 +14,7 @@ export default function SignInPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.post("/users/login/", form);
+      await api.post("/auth/login/", form);
       router.push("/dashboard");
     } catch (err: any) {
       const detail = err?.response?.data?.detail ?? "Unable to sign in.";

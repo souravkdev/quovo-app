@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.post("/users/password/forgot/", { email });
+      await api.post("/auth/password/forgot/", { email });
       setSubmitted(true);
     } catch {
       // We intentionally hide detailed errors here to avoid leaking user existence.

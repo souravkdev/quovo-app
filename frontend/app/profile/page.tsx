@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   const fetchUser = async () => {
     try {
-      const response = await api.get("/users/me/");
+      const response = await api.get("/auth/me/");
       setUser(response.data);
     } catch (err) {
       console.error("Failed to fetch user:", err);
