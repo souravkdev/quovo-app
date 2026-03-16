@@ -14,7 +14,7 @@ export default function SignUpPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.post("/users/register/", form);
+      await api.post("/auth/register/", form);
       router.push("/dashboard");
     } catch (err: any) {
       const detail =

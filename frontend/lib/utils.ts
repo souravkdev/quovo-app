@@ -22,4 +22,4 @@ export function getInitials(name: string): string {
 }
 
 // Auth helpers are now cookie-based (HttpOnly JWTs).
-// Login state is determined server-side via /users/me/ rather than localStorage.
+// Login state is determined server-side via /auth/me/ rather than localStorage.

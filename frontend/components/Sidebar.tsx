@@ -48,7 +48,7 @@ export function Sidebar() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await api.get("/users/me/");
+        const response = await api.get("/auth/me/");
         setUser(response.data);
       } catch (err) {
         console.error("Failed to fetch user:", err);
@@ -105,7 +105,7 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await api.post("/users/logout/");
+      await api.post("/auth/logout/");
     } catch (err) {
       console.error("Logout failed", err);
     } finally {

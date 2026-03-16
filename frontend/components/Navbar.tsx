@@ -11,7 +11,7 @@ export default function Navbar() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await api.get("/users/me/");
+        const res = await api.get("/auth/me/");
         setLoggedIn(res.status === 200);
       } catch {
         setLoggedIn(false);
