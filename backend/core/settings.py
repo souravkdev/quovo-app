@@ -90,3 +90,12 @@ SIMPLE_JWT = {
 }
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+# Email settings (used for verification emails).
+# In development, default to console backend so the flow works without SMTP config.
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@quovo.local")
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))

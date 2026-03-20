@@ -1,15 +1,16 @@
 from django.contrib.auth import authenticate, get_user_model
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
+from django.core.mail import send_mail
 from django.shortcuts import redirect
 from django.utils import timezone
 import uuid
 import requests
-from .models import User, PasswordResetToken
+from .models import User, PasswordResetToken, EmailVerificationToken
 from .serializers import UserSerializer
 
 
@@ -39,8 +40,40 @@ def set_auth_cookies(response, access: str, refresh: str):
     return response
 
 
+def send_email_verification(user: User) -> str:
+    """
+    Creates a new one-time verification token and sends an email to the user.
+    Returns the raw token (mainly for debugging/dev use).
+    """
+    # Invalidate any previous unused tokens for this user.
+    EmailVerificationToken.objects.filter(user=user, used=False).update(used=True)
+
+    token = uuid.uuid4().hex
+    EmailVerificationToken.objects.create(
+        user=user,
+        token=token,
+        expires_at=timezone.now() + timezone.timedelta(days=1),
+    )
+
+    verification_url = f"{settings.FRONTEND_URL}/verify-email/?token={token}"
+    send_mail(
+        subject="Verify your email address",
+        message=(
+            f"Hi {user.name or ''},\n\n"
+            "Thanks for creating your Quovo account.\n"
+            f"Please verify your email by clicking:\n{verification_url}\n\n"
+            "If you didn't create this account, you can ignore this email."
+        ),
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "no-reply@quovo.local"),
+        recipient_list=[user.email],
+        fail_silently=True,  # allows dev/console email backend to keep the flow working
+    )
+    return token
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def github_login(request):
     """
     Step 1 — redirect user to GitHub authorization page.
@@ -56,6 +89,7 @@ def github_login(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def github_callback(request):
     """
     Step 2 — GitHub redirects back here with a code.
@@ -130,6 +164,10 @@ def github_callback(request):
                 avatar_url=avatar_url,
                 google_id=github_id,
             )
+    # GitHub marks the email as verified. Treat it as verified on our side too.
+    if not user.email_verified:
+        user.email_verified = True
+        user.save(update_fields=["email_verified"])
 
     tokens = get_tokens_for_user(user)
 
@@ -141,6 +179,7 @@ def github_callback(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def register(request):
     """
     Email/password registration.
@@ -159,6 +198,18 @@ def register(request):
     existing = UserModel.objects.filter(email=email).first()
 
     if existing and existing.has_usable_password():
+        # If they haven't verified their email yet, resend a verification email.
+        if not existing.email_verified:
+            send_email_verification(existing)
+            return Response(
+                {
+                    "detail": "verification_required",
+                    "email": existing.email,
+                    "email_verified": False,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
         return Response(
             {"detail": "An account with this email already exists"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -172,6 +223,20 @@ def register(request):
     else:
         user = UserModel.objects.create_user(email=email, name=name, password=password)
 
+    # For new/password accounts we require email verification before login.
+    if not user.email_verified:
+        send_email_verification(user)
+        return Response(
+            {
+                "detail": "verification_required",
+                "email": user.email,
+                "email_verified": False,
+                "user": UserSerializer(user).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    # Email already verified: create session via JWT cookies.
     tokens = get_tokens_for_user(user)
     data = {
         "user": UserSerializer(user).data,
@@ -182,6 +247,89 @@ def register(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@authentication_classes([])
+def verify_email(request):
+    """
+    Verifies the user's email using the one-time token from the verification email.
+    Expects JSON body: { "token": "..." }
+    """
+    token = request.data.get("token") or request.query_params.get("token")
+    if not token:
+        return Response(
+            {"detail": "Verification token is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        verification = (
+            EmailVerificationToken.objects.select_related("user")
+            .get(token=token)
+        )
+    except EmailVerificationToken.DoesNotExist:
+        return Response(
+            {"detail": "Invalid or expired verification token"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not verification.is_valid():
+        return Response(
+            {"detail": "Invalid or expired verification token"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Mark token used and verify the user.
+    verification.used = True
+    verification.save(update_fields=["used"])
+
+    user = verification.user
+    user.email_verified = True
+    user.save(update_fields=["email_verified"])
+
+    return Response(
+        {"detail": "Email verified successfully", "email_verified": True},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def resend_verification(request):
+    """
+    Resends a new verification email.
+    Expects JSON body: { "email": "user@example.com" }
+    """
+    email = request.data.get("email")
+    if not email:
+        return Response(
+            {"detail": "Email is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Avoid leaking whether an email exists.
+    user = User.objects.filter(email=email).first()
+    if not user:
+        return Response(
+            {"detail": "If an account exists, a verification email was sent."},
+            status=status.HTTP_200_OK,
+        )
+
+    if user.email_verified:
+        return Response(
+            {"detail": "Email already verified", "email_verified": True},
+            status=status.HTTP_200_OK,
+        )
+
+    send_email_verification(user)
+    return Response(
+        {"detail": "Verification email sent. Please check your inbox."},
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@authentication_classes([])
 def login(request):
     """
     Email/password sign-in. Returns JWT access/refresh pair.
@@ -201,6 +349,12 @@ def login(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
+    if not getattr(user, "email_verified", False):
+        return Response(
+            {"detail": "Email not verified"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
     tokens = get_tokens_for_user(user)
     data = {
         "user": UserSerializer(user).data,
@@ -211,6 +365,7 @@ def login(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def forgot_password(request):
     """
     Request a password reset.
@@ -271,6 +426,7 @@ def change_password(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def reset_password(request):
     """
     Final step of password reset using a one-time token.
@@ -317,6 +473,7 @@ def reset_password(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@authentication_classes([])
 def logout(request):
     """
     Logs out the user by clearing auth cookies.

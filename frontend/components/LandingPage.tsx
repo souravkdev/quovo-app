@@ -2,8 +2,23 @@
 
 import Link from "next/link";
 import { CheckCircle, ArrowRight, Zap, BarChart3, Lock, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function LandingPage() {
+  const params = useSearchParams();
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = params.get("toast");
+    if (t === "logged_out") {
+      setToast("Successfully logged out.");
+      // Auto-hide
+      const timer = setTimeout(() => setToast(null), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [params]);
+
   const features = [
     {
       icon: Zap,
@@ -75,6 +90,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100]">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800 shadow-lg">
+            {toast}
+          </div>
+        </div>
+      )}
       {/* Navigation */}
       <nav className="border-b border-gray-200 sticky top-0 z-50 bg-white/95 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">

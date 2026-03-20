@@ -39,6 +39,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     freelancer_type = models.CharField(max_length=100, blank=True, null=True)
     hourly_rate = models.IntegerField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # Set to True only after the user clicks the verification link sent to their email.
+    email_verified = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -55,6 +57,26 @@ class User(AbstractBaseUser, PermissionsMixin):
 class PasswordResetToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    token = models.CharField(max_length=128, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    def is_valid(self) -> bool:
+        return not self.used and self.expires_at > timezone.now()
+
+
+class EmailVerificationToken(models.Model):
+    """
+    One-time token used to verify a user's email address.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="email_verification_tokens",
+    )
     token = models.CharField(max_length=128, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

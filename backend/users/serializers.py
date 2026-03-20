@@ -7,6 +7,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             "id", "email", "name", "avatar_url",
             "plan", "freelancer_type", "hourly_rate",
-            "logo_url", "created_at"
+            "logo_url", "created_at", "email_verified"
         ]
-        read_only_fields = ["id", "email", "plan", "created_at"]
+        read_only_fields = ["id", "email", "plan", "created_at", "email_verified"]
