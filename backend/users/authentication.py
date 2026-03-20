@@ -38,5 +38,9 @@ class CookieJWTAuthentication(authentication.BaseAuthentication):
         if not user.is_active:
             raise exceptions.AuthenticationFailed(_("User is inactive"))
 
+        # Prevent unverified users from accessing protected routes.
+        if hasattr(user, "email_verified") and not user.email_verified:
+            raise exceptions.AuthenticationFailed(_("Email not verified"))
+
         return (user, None)
 

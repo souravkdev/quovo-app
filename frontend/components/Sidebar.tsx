@@ -109,7 +109,8 @@ export function Sidebar() {
     } catch (err) {
       console.error("Logout failed", err);
     } finally {
-      router.push("/signin");
+      // Hard reload to fully reset app state/layout (cookies, cached data, etc.)
+      window.location.href = "/?toast=logged_out";
     }
   };
 

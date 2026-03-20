@@ -6,11 +6,17 @@ import Navbar from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import LandingPage from "@/components/LandingPage";
 
-const AUTH_PAGES = ["/signin", "/signup", "/forgot-password", "/reset-password", "/auth/callback"];
+const AUTH_PAGES = ["/signin", "/signup", "/verify-email", "/forgot-password", "/reset-password", "/auth/callback"];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  // Avoid hitting /auth/me/ while the user is verifying their email.
+  // Otherwise the auth check can race and return 403 before the verification request finishes.
+  if (pathname === "/verify-email") {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     async function checkAuth() {
@@ -27,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     }
     checkAuth();
-  }, []);
+  }, [pathname]);
 
   // Show nothing while checking auth
   if (loggedIn === null) {
